@@ -4,7 +4,6 @@ locals {
   )
   nat_gateway_count = var.single_nat_gateway ? 1 : var.one_nat_gateway_per_az ? length(var.azs) : local.max_subnet_length
 
-  # Use `local.vpc_id` to give a hint to Terraform that subnets should be deleted before secondary CIDR blocks can be free!
   vpc_id = element(
     concat(
       aws_vpc_ipv4_cidr_block_association.this.*.vpc_id,
@@ -162,14 +161,6 @@ resource "aws_egress_only_internet_gateway" "this" {
 ##############
 # NAT Gateway
 ##############
-# Workaround for interpolation not being able to "short-circuit" the evaluation of the conditional branch that doesn't end up being used
-# Source: https://github.com/hashicorp/terraform/issues/11566#issuecomment-289417805
-#
-# The logical expression would be
-#
-#    nat_gateway_ips = var.reuse_nat_ips ? var.external_nat_ip_ids : aws_eip.nat.*.id
-#
-# but then when count of aws_eip.nat.*.id is zero, this would throw a resource not found error on aws_eip.nat.*.id.
 locals {
   nat_gateway_ips = split(
     ",",
